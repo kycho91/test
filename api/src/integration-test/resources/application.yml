@@ -1,6 +1,5 @@
 spring.profiles.include:
   - api-common
-  - client-sample
   - domain-sample
   - infra-rds
 ---

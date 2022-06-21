@@ -4,4 +4,3 @@ include("api")  // application
 include("domain-sample")   // domain
 include("api-common") // infra
 include("infra-rds") // infra
-include("client-sample") // infra
