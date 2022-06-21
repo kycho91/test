@@ -28,7 +28,6 @@ dependencies {
 
     implementation(project(":api-common"))
     implementation(project(":domain-sample"))
-    implementation(project(":client-sample"))
 
     runtimeOnly("com.h2database:h2")
     runtimeOnly("org.mariadb.jdbc:mariadb-java-client")
