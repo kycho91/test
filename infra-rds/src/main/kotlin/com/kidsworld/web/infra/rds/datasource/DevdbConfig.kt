@@ -20,7 +20,7 @@ import javax.sql.DataSource
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-    basePackages = ["com.kidsworld.domain.repository.devdb"],
+    basePackages = ["com.kidsworld.web.domain.repository.devdb"],
     entityManagerFactoryRef = "devdbEntityManager",
     transactionManagerRef = "devdbTransactionManager")
 class DevdbConfig {
@@ -36,7 +36,7 @@ class DevdbConfig {
     fun devdbEntityManager(): LocalContainerEntityManagerFactoryBean =
         (LocalContainerEntityManagerFactoryBean()).apply {
             dataSource = devdbDataSource()
-            setPackagesToScan("com.kidsworld.domain")
+            setPackagesToScan("com.kidsworld.web.domain")
             jpaVendorAdapter = HibernateJpaVendorAdapter()
         }
 
