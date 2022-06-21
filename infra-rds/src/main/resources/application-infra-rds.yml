@@ -1,0 +1,43 @@
+spring:
+  jpa:
+    open-in-view: false
+    show-sql: false
+    properties.hibernate.format_sql: false
+    hibernate:
+      ddl-auto: none
+      query.in_clause_parameter_padding: true
+      default_batch_fetch_size: 16
+      id.new_generator_mappings: true
+      connection.provider_disables_autocommit: true
+
+---
+spring.config.activate.on-profile: local
+spring:
+  datasource:
+    devdb:
+      jdbc-url: jdbc:h2:mem:devdb
+      username: sa
+      driverClassName: org.h2.Driver
+    dev2db:
+      jdbc-url: jdbc:h2:mem:dev2db
+      username: sa
+      driverClassName: org.h2.Driver
+  jpa:
+    hibernate.show-sql: true
+
+---
+spring.config.activate.on-profile: dev
+spring:
+  datasource:
+    devdb:
+      driver-class-name: org.mariadb.jdbc.Driver
+      jdbc-url: jdbc:mariadb://127.0.0.1:13306/devdb
+      username: root
+      password: developer
+    dev2db:
+      driver-class-name: org.mariadb.jdbc.Driver
+      jdbc-url: jdbc:mariadb://127.0.0.1:13306/dev2db
+      username: root
+      password: developer
+  jpa:
+    hibernate.show-sql: true

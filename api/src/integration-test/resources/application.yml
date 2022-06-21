@@ -1,0 +1,19 @@
+spring.profiles.include:
+  - api-common
+  - client-sample
+  - domain-sample
+  - infra-rds
+---
+spring:
+  config.activate.on-profile: local
+  datasource.using:
+    devdb: true
+    dev2db: true
+
+
+---
+spring:
+  config.activate.on-profile: dev
+  datasource.using:
+    devdb: true
+    dev2db: true

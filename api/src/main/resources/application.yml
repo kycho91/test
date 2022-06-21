@@ -1,0 +1,36 @@
+spring:
+  profiles:
+    include:
+      - api-common
+      - client-sample
+      - domain-sample
+      - infra-rds
+    active: local
+
+logging.level.root: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - "info"
+          - "health"
+
+---
+spring:
+  config.activate.on-profile: local
+  datasource.using:
+    devdb: true
+    dev2db: true
+
+logging.level.root: debug
+
+---
+spring:
+  config.activate.on-profile: dev
+  datasource.using:
+    devdb: true
+    dev2db: true
+
+logging.level.root: debug
