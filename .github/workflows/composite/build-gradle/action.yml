@@ -1,0 +1,12 @@
+name: Gradle/build
+description: gradle build
+inputs:
+  args:
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Build with Gradle
+      run: ./gradlew clean build ${{inputs.args}}
+      shell: bash

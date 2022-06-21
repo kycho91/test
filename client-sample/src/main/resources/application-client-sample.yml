@@ -1,0 +1,24 @@
+# Feign using okhttp
+clients:
+  sample:
+    endpoint: https://www.sample.com
+    access-key: asdfasdfasdf
+
+feign:
+  okhttp:
+    enabled: true
+    max-connections-per-route: 100
+  client:
+    config:
+      sampleClient:
+        connectTimeout: 10000
+        readTimeout: 10000
+        writeTimeout: 10000
+        loggerLevel: full
+        errorDecoder: com.kidsworld.client.sample.configuration.SampleClientErrorDecoder
+
+---
+spring.config.activate.on-profile: local
+
+---
+spring.config.activate.on-profile: dev

@@ -1,0 +1,124 @@
+name: (1_RELEASE) BOILERPLATE
+on:
+  push:
+    branches:
+      - 'releases/**'
+    paths-ignore:
+      - '**.md'
+      - 'doc/**'
+      - '.gitignore'
+
+##################################################################################
+# Environment variables
+##################################################################################
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ACCESS_KEY_ID: ${{ secrets.SA_DEPLOY_AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.SA_DEPLOY_AWS_SECRET_ACCESS_KEY }}
+  SERVICE_ROLE: ${{ secrets.AWS_ROLE_ECR_PUSH }}
+  ECR_REGISTRY: ${{ secrets.AWS_ECR_REGISTRY_URL }}
+  DEVOPS_GIT_REPOSITORY: kidsworld-gitops
+  MODULE: api
+
+defaults:
+  run:
+    shell: bash
+
+#########################################################ß#########################
+# Build Application
+##################################################################################
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # ECR 로그인
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.SERVICE_ROLE }}
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # build tag 변수 설정
+      # 리포지토리 이름. 도커 태깅에서 사용
+      - name: Fetch Repo Name
+        id: repo-name
+        run: echo "::set-output name=value::$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')"
+      # 브랜치 이름. 도커 태깅에서 사용
+      - name: Fetch Branch Name
+        id: ref-name
+        run: echo "::set-output name=value::$(echo '${{ github.ref_name }}' | sed -e 's/\//_/g')"
+      # 현재시간. 도커 태깅에서 사용
+      - name: Get current time
+        uses: josStorer/get-current-time@v2
+        id: current-time
+        with:
+          format: YYYYMMDD_HHmm
+          utcOffset: "+09:00"
+
+      # gradle 빌드 환경 설정
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: "11"
+          distribution: "temurin"
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      # gradle build 수행 (docker 빌드 포함)
+      - name: Build Gradle
+        id: gradle
+        env:
+          IMAGE_TAG: ${{ steps.ref-name.outputs.value }}_${{ github.run_number }}_${{ steps.current-time.outputs.formattedTime }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew ${{ env.MODULE }}:jib -Djib.to.image=${{ env.ECR_REGISTRY }}/${{ steps.repo-name.outputs.value }}-${{ env.MODULE }} -Djib.to.tags=${{ env.IMAGE_TAG }}
+          echo "::set-output name=tag::${{ env.IMAGE_TAG }}"
+
+    outputs:
+      repository: ${{ steps.repo-name.outputs.value }}
+      tag: ${{ steps.gradle.outputs.tag }}
+
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout GitOps repository
+        uses: actions/checkout@v2
+        with:
+          repository: kidsworld-service/${{ env.DEVOPS_GIT_REPOSITORY }}
+          ref: main
+          token: ${{ secrets.SA_DEPLOY_GIT_PAT }}
+          path: ${{ env.DEVOPS_GIT_REPOSITORY }}
+
+      # Update image tag
+      - uses: srfrnk/setup-yq@latest
+      - name: Set env var
+        run: echo "FILENAME=$(echo ${{ env.DEVOPS_GIT_REPOSITORY }}/${{ needs.build.outputs.repository }}-${{ env.MODULE }}/app/values-dev.yaml)" >> $GITHUB_ENV
+      - name: Update image tag
+        run: patch ${{ env.FILENAME }} <<< $(diff -U0 -w -b --ignore-blank-lines ${{ env.FILENAME }} <(yq eval ".image.tag = \"${{ needs.build.outputs.tag }}\"" ${{ env.FILENAME }}))
+
+      - name: Check values.yaml
+        run: cat ${{ env.FILENAME }}
+
+      - name: Commit files
+        run: |
+          cd ${{ env.DEVOPS_GIT_REPOSITORY }}
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git commit -am "Update image tag"
+          git push -u origin main
