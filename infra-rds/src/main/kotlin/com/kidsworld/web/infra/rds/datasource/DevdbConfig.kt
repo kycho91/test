@@ -1,4 +1,4 @@
-package com.kidsworld.core.config.datasource
+package com.kidsworld.web.infra.rds.datasource
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties

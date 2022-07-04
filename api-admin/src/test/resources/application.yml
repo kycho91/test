@@ -1,0 +1,6 @@
+spring:
+  profiles:
+    include:
+      - api-common
+      - domain
+      - infra-rds
