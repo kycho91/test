@@ -16,7 +16,7 @@ allprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin-kapt")
 
-    group = "com.kidsworld"
+    group = "com.kidsworld.web"
     version = "1.0-SNAPSHOT"
 
     tasks.withType<Test> {
